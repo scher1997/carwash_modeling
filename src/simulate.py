@@ -8,17 +8,14 @@ Usage:
     python src/simulate.py
 """
 
-import sys
 import os
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(__file__))
-
-from state import State
-from exogenous import ExogenousInfo
-from transition import transition
-from objective import cost
-from policies import POLICIES
+from .state import State
+from .exogenous import ExogenousInfo
+from .transition import transition
+from .objective import cost
+from .policies import POLICIES
 
 
 def run(

@@ -10,16 +10,13 @@ Usage:
     python src/tune.py
 """
 
-import sys
 import os
 import itertools
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, os.path.dirname(__file__))
-
-from evaluate import evaluate_policy, compare_policies, summary_stats
+from .evaluate import evaluate_policy, compare_policies, summary_stats
 
 
 # ---------------------------------------------------------------------------

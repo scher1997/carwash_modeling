@@ -1,4 +1,4 @@
-from state import State
+from .state import State
 
 
 def transition(state: State, decision: dict, exogenous: dict) -> State:

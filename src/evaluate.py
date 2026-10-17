@@ -9,16 +9,13 @@ Usage:
     python src/evaluate.py
 """
 
-import sys
 import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-sys.path.insert(0, os.path.dirname(__file__))
-
-from simulate import run
+from .simulate import run
 
 
 # ---------------------------------------------------------------------------

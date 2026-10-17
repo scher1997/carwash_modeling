@@ -1,4 +1,4 @@
-from state import State
+from .state import State
 
 
 def policy_always_open(state: State, params: dict) -> dict:
