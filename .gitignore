@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+*.ipynb_checkpoints/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Quarto
+_site/
+_book/
+_freeze/
+.quarto/
+
+# Simulation outputs (reproducible — don't commit by default)
+results/*
+!results/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
