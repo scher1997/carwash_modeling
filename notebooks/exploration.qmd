@@ -1,0 +1,21 @@
+```{r}
+library(tidyverse)
+```
+
+# Reading in data
+```{r}
+policy_eval <- read_csv('results/policy_evaluation.csv')
+head(policy_eval)
+spec(policy_eval)
+simulation_trace <- read_csv('results/policy_summary.csv')
+head(simulation_trace)
+spec(simulation_trace)
+```
+
+# Initial visuals
+
+```{r}
+policy_eval |> 
+    group_by(policy) |> 
+    summarise(max(max_queue))
+```
