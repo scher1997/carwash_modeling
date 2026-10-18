@@ -14,7 +14,7 @@ import pandas as pd
 from .state import State
 from .exogenous import ExogenousInfo
 from .transition import transition
-from .objective import cost
+from .objective import contribution
 from .policies import POLICIES
 
 
@@ -70,7 +70,7 @@ def run(
         completions = min(state.bays_busy, int(exo.rng.poisson(exo.service_rate / 60.0 * state.bays_busy)))
         wait_added = state.queue_length * step
 
-        step_cost = cost(state, decision, cost_params)
+        econ = contribution(state, decision, cost_params, {"completions": completions})
 
         records.append({
             "time": t,
@@ -82,7 +82,7 @@ def run(
             "decision_bays": decision.get("bays_open"),
             "arrivals": arrivals,
             "completions": completions,
-            "cost": step_cost,
+            **econ,
         })
 
         exogenous_realization = {
@@ -106,7 +106,8 @@ if __name__ == "__main__":
     df.to_csv(out_path, index=False)
 
     print(f"Simulation complete. {len(df)} steps.")
-    print(f"Total cost:    {df['cost'].sum():.2f}")
+    print(f"Revenue:       {df['revenue'].sum():.2f}")
+    print(f"Profit:        {df['profit'].sum():.2f}")
     print(f"Cars served:   {df['cars_served'].iloc[-1]}")
     print(f"Avg wait:      {df['avg_wait'].iloc[-1]:.2f} min")
     print(f"Results saved: {out_path}")

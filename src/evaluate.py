@@ -60,6 +60,10 @@ def evaluate_policy(
         records.append({
             "replication": i,
             "total_cost": trace["cost"].sum(),
+            "total_profit": trace["profit"].sum(),
+            "total_revenue": trace["revenue"].sum(),
+            "total_operating_cost": (trace["wash_cost"] + trace["bay_cost"]).sum(),
+            "total_wait_cost": trace["wait_cost"].sum(),
             "cars_served": trace["cars_served"].iloc[-1],
             "avg_wait": trace["avg_wait"].iloc[-1],
             "avg_queue": trace["queue_length"].mean(),
@@ -117,7 +121,8 @@ def summary_stats(results: pd.DataFrame) -> pd.DataFrame:
     Aggregate a results DataFrame (from compare_policies) into a
     mean ± std summary table, grouped by policy.
     """
-    metrics = ["total_cost", "cars_served", "avg_wait", "avg_queue", "max_queue", "avg_bays_open"]
+    metrics = ["total_cost", "total_profit", "total_revenue", "total_operating_cost",
+               "total_wait_cost", "cars_served", "avg_wait", "avg_queue", "max_queue", "avg_bays_open"]
     rows = []
     for policy, group in results.groupby("policy"):
         row = {"policy": policy}
@@ -275,7 +280,9 @@ if __name__ == "__main__":
 
     stats = summary_stats(results)
     stats.to_csv("results/policy_summary.csv", index=False)
-    print(stats[["policy", "total_cost_mean", "total_cost_std", "avg_wait_mean", "cars_served_mean"]].to_string(index=False))
+    print(stats[["policy", "total_profit_mean", "total_profit_std", "total_revenue_mean",
+                 "total_operating_cost_mean", "total_wait_cost_mean", "avg_wait_mean",
+                 "cars_served_mean"]].to_string(index=False))
 
     plot_cost_distribution(results, save_path="results/fig_cost_distribution.png")
     plot_avg_wait_distribution(results, save_path="results/fig_wait_distribution.png")

@@ -1,12 +1,21 @@
 from .state import State
 
+# Placeholder economics ($) — calibrate to the real site before trusting results.
+DEFAULT_COST_PARAMS = {
+    "price_per_wash": 12.0,  # revenue per completed wash
+    "cost_per_wash": 3.0,    # variable cost per wash (water, chemicals, power)
+    "bay_cost": 0.5,         # cost per staffed bay per minute ($30/hr labour + energy)
+    "wait_penalty": 0.2,     # goodwill cost per car per minute in queue
+}
 
-def cost(state: State, decision: dict, params: dict) -> float:
+
+def contribution(state: State, decision: dict, params: dict, exogenous: dict = None) -> dict:
     """
-    C_t: contribution function evaluated at each time step.
+    C(S_t, x_t, W_{t+1}): economics of one time step.
 
-    Returns the cost (or negative reward) incurred at this step.
-    Lower is better. Adjust weights in params to change the trade-off.
+    Revenue and variable cost accrue when a wash completes. A bay costs money
+    while it is staffed: that is every open bay, plus any closing bay still
+    finishing its last car.
 
     Parameters
     ----------
@@ -15,19 +24,36 @@ def cost(state: State, decision: dict, params: dict) -> float:
     decision : dict
         Decision x_t.
     params : dict
-        Weights and cost coefficients. Expected keys:
-          - 'wait_penalty'  (float): cost per car per minute waiting
-          - 'bay_cost'      (float): cost per open bay per period
+        Overrides for DEFAULT_COST_PARAMS.
+    exogenous : dict, optional
+        Realized W_{t+1}; uses 'completions'.
 
     Returns
     -------
-    float
-        Cost incurred this period.
+    dict
+        revenue, wash_cost, bay_cost, wait_cost, profit, and cost (= -profit,
+        the quantity policies and tuning minimize).
     """
-    wait_penalty = params.get("wait_penalty", 1.0)
-    bay_cost = params.get("bay_cost", 0.5)
+    p = {**DEFAULT_COST_PARAMS, **(params or {})}
+    completions = (exogenous or {}).get("completions", 0)
+    staffed_bays = max(decision.get("bays_open", state.bays_open), state.bays_busy)
 
-    waiting_cost = state.queue_length * wait_penalty
-    operating_cost = decision.get("bays_open", state.bays_open) * bay_cost
+    revenue = completions * p["price_per_wash"]
+    wash_cost = completions * p["cost_per_wash"]
+    bay_cost = staffed_bays * p["bay_cost"]
+    wait_cost = state.queue_length * p["wait_penalty"]
+    profit = revenue - wash_cost - bay_cost - wait_cost
 
-    return waiting_cost + operating_cost
+    return {
+        "revenue": revenue,
+        "wash_cost": wash_cost,
+        "bay_cost": bay_cost,
+        "wait_cost": wait_cost,
+        "profit": profit,
+        "cost": -profit,
+    }
+
+
+def cost(state: State, decision: dict, params: dict, exogenous: dict = None) -> float:
+    """Net cost of one step (= -profit). Lower is better."""
+    return contribution(state, decision, params, exogenous)["cost"]
