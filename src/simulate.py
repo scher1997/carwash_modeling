@@ -80,6 +80,8 @@ def run(
             "cars_served": state.cars_served,
             "avg_wait": state.avg_wait,
             "decision_bays": decision.get("bays_open"),
+            "arrivals": arrivals,
+            "completions": completions,
             "cost": step_cost,
         })
 
