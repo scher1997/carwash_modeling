@@ -64,7 +64,13 @@ def summarize_invariants(df: pd.DataFrame) -> dict:
 # Static flow audit
 # ---------------------------------------------------------------------------
 
+def _ensure_checked(df: pd.DataFrame) -> pd.DataFrame:
+    """Run check_invariants() if it hasn't been, so plots never show a false 'OK'."""
+    return df if "viol_conservation" in df.columns else check_invariants(df)
+
+
 def plot_flow_audit(df: pd.DataFrame, path: str) -> None:
+    df = _ensure_checked(df)
     fig, axes = plt.subplots(3, 1, figsize=(11, 9), sharex=True,
                              gridspec_kw={"height_ratios": [3, 2, 1.4]})
     t = df["time"]
@@ -116,6 +122,7 @@ def plot_flow_audit(df: pd.DataFrame, path: str) -> None:
 
 def animate_flow(df: pd.DataFrame, path: str, minutes: int = 120, fps: int = 6) -> None:
     """Animate queue -> bays -> exit for the first `minutes` steps."""
+    df = _ensure_checked(df)
     frames = df.iloc[:minutes].reset_index(drop=True)
     max_bays = int(df["bays_open"].max())
     max_queue = max(10, int(frames["queue_length"].max()))
