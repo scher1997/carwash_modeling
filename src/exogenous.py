@@ -20,7 +20,10 @@ class ExogenousInfo:
         seed : int, optional
             RNG seed for reproducibility.
         """
-        self.rng = np.random.default_rng(seed)
+        if seed is None:
+            self.rng = np.random.default_rng()
+        else:
+            self.rng = np.random.default_rng(seed)
         self.arrival_rate = arrival_rate    # cars/hour
         self.service_rate = service_rate    # cars/hour/bay
 

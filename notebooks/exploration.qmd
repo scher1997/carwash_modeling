@@ -19,3 +19,16 @@ policy_eval |>
     group_by(policy) |> 
     summarise(max(max_queue))
 ```
+
+
+```{r}
+y_col_names <- colnames(policy_eval)[c(3,4,5,6,7,8)]
+for (col_name in y_col_names){
+    # print(col_name)
+    ggplot(policy_eval,aes(x=replication,color=policy))+
+        geom_point(y=policy_eval[col_name])
+}
+# policy_eval |> 
+#     ggplot(aes(x=replication, y=max_queue,color=policy)) +
+#         geom_point()
+```
