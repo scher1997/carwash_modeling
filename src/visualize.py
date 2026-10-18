@@ -9,7 +9,8 @@ Produces two outputs for one episode:
 
 Invariants checked each step (a real car wash must satisfy all of them):
   - conservation:     arrivals_so_far - served_so_far == queue + bays_busy
-  - capacity:         0 <= bays_busy <= bays_open
+  - capacity:         bays_busy <= bays_open, except closing bays finishing
+                      a car (busy may exceed open, but only by draining)
   - non-negative:     queue_length >= 0
   - work-conserving:  no idle open bay while cars are waiting
   - no-vanishing:     closing bays never ejects a car mid-wash
@@ -43,11 +44,14 @@ def check_invariants(df: pd.DataFrame) -> pd.DataFrame:
     df["in_system_state"] = df["queue_length"] + df["bays_busy"]
 
     df["viol_conservation"] = df["in_system_expected"] != df["in_system_state"]
-    df["viol_capacity"] = (df["bays_busy"] > df["bays_open"]) | (df["bays_busy"] < 0)
+    # A car in service can only leave by completing, so busy_{t+1} >= busy_t - completions_t.
+    still_in_service = (df["bays_busy"] - df["completions"]).shift(fill_value=0)
+    # Over capacity is only legal while closing bays drain (no new starts).
+    over = df["bays_busy"] > df["bays_open"]
+    df["viol_capacity"] = (over & (df["bays_busy"] > still_in_service)) | (df["bays_busy"] < 0)
     df["viol_negative"] = df["queue_length"] < 0
     df["viol_idle_bay"] = (df["bays_busy"] < df["bays_open"]) & (df["queue_length"] > 0)
-    # A car in service can only leave by completing, so busy_{t+1} >= busy_t - completions_t.
-    df["viol_vanish"] = df["bays_busy"] < (df["bays_busy"] - df["completions"]).shift(fill_value=0)
+    df["viol_vanish"] = df["bays_busy"] < still_in_service
     return df
 
 
@@ -152,13 +156,15 @@ def animate_flow(df: pd.DataFrame, path: str, minutes: int = 120, fps: int = 6) 
             ec = "#333" if is_open else "#ccc"
             fc = "#eafaf0" if is_busy else ("white" if is_open else "#f2f2f2")
             ax.add_patch(Rectangle((5.4, y - 0.4), 1.6, 0.8, fc=fc, ec=ec, lw=1.5))
-            label = "busy" if is_busy else ("idle" if is_open else "closed")
+            closing = is_busy and not is_open  # finishing its last car
+            if closing:
+                ec, fc = "#e07b00", "#fff4e5"
+                ax.add_patch(Rectangle((5.4, y - 0.4), 1.6, 0.8, fc=fc, ec=ec, lw=1.5))
+            label = ("closing" if closing else "busy") if is_busy else ("idle" if is_open else "closed")
             ax.text(6.2, y + 0.5, f"Bay {b + 1}: {label}", ha="center", fontsize=8,
                     color=ec)
             if is_busy:
-                ax.add_patch(Circle((6.2, y), 0.18, color="#27ae60"))
-            if b >= open_ and b < busy:  # car in a closed bay: impossible
-                ax.text(6.2, y, "!", ha="center", va="center", color="#c0392b", fontsize=16)
+                ax.add_patch(Circle((6.2, y), 0.18, color="#e07b00" if closing else "#27ae60"))
 
         # Exit
         ax.annotate("", xy=(8.0, 2.05), xytext=(7.1, 2.05),

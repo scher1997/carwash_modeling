@@ -35,8 +35,15 @@ def transition(state: State, decision: dict, exogenous: dict) -> State:
     completions = exogenous.get("completions", 0)
     wait_added = exogenous.get("wait_added", 0.0)
 
-    next_state.queue_length = max(0, state.queue_length + arrivals - completions)
-    next_state.bays_busy = min(next_state.bays_open, next_state.queue_length + completions - arrivals + state.bays_busy)
+    # Cars still being washed stay in their bay, even if that bay is closing
+    # (a closing bay takes no new cars but finishes its current one).
+    in_service = state.bays_busy - completions
+    waiting = state.queue_length + arrivals
+    free_bays = max(0, next_state.bays_open - in_service)
+    starts = min(free_bays, waiting)
+
+    next_state.bays_busy = in_service + starts
+    next_state.queue_length = waiting - starts
     next_state.cars_served += completions
     next_state.total_wait += wait_added
 
