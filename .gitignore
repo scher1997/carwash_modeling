@@ -34,3 +34,5 @@ results/*
 .DS_Store
 Thumbs.db
 *.log
+# roborev snapshots
+/.roborev/

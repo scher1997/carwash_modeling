@@ -18,6 +18,9 @@ import matplotlib.pyplot as plt
 
 from .evaluate import evaluate_policy, compare_policies, summary_stats
 
+# Objectives where larger is better; everything else is minimized.
+HIGHER_IS_BETTER = {"total_profit", "total_revenue", "cars_served"}
+
 
 # ---------------------------------------------------------------------------
 # 1. Manual grid search
@@ -43,7 +46,8 @@ def grid_search(
         Example: {'open_threshold': [3, 5, 7], 'close_threshold': [1, 2]}
     objective : str
         Summary metric to rank combinations by (uses mean across replications).
-        Options: total_cost, avg_wait, cars_served, avg_queue.
+        Any column returned by evaluate_policy(); those in HIGHER_IS_BETTER
+        sort descending, the rest ascending.
 
     Returns
     -------
@@ -67,13 +71,13 @@ def grid_search(
             service_rate=service_rate,
         )
         row = {**params}
-        for metric in ["total_cost", "avg_wait", "cars_served", "avg_queue", "max_queue"]:
+        for metric in df.columns.drop("replication"):
             row[f"{metric}_mean"] = df[metric].mean()
             row[f"{metric}_std"] = df[metric].std()
         records.append(row)
 
     result = pd.DataFrame(records)
-    ascending = objective != "cars_served"  # higher cars_served is better
+    ascending = objective not in HIGHER_IS_BETTER
     return result.sort_values(f"{objective}_mean", ascending=ascending).reset_index(drop=True)
 
 
